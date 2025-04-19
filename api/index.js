@@ -11,12 +11,13 @@ const connectDB = async () => {
   await mongoose.connect(process.env.MONGODB_URI);
   isConnected = true;
 };
+
 app.use(express.json());
 app.get('/users', async(req, res) => {
   try{
-    await connectDB();
+      await connectDB();
       const users = await Usuario.find({});
-      res.json(users);
+      res.status(200).json(users);
     }catch(err){
       res.status(500).json({message: err.message});
     }
