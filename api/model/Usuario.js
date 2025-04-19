@@ -18,4 +18,4 @@ const usuarioSchema = new mongoose.Schema({
   },
   tasks: [tareaSchema]
 });
-module.exports = mongoose.model('Usuario', usuarioSchema, "session");
+module.exports = mongoose.models.Usuario || mongoose.model('Usuario', usuarioSchema, "session");
