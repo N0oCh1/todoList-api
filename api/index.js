@@ -1,11 +1,18 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-const Usuario = require('../model/Usuario');
+const Usuario = require('./model/Usuario');
 require('dotenv').config();
 
-mongoose.connect(process.env.MONGO_URL).then(() => {console.log('MongoDB connected')}).catch(err => {console.log(err)});
 
+let isConnected;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  await mongoose.connect(process.env.MONGODB_URI);
+  isConnected = true;
+};
+await connectDB();
 app.get('/users', async(req, res) => {
     try{
       const user = await Usuario.find({});
