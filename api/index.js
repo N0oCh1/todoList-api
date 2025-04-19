@@ -2,21 +2,21 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const Usuario = require('./model/Usuario');
-require('dotenv').config();
 
 
-let isConnected;
+let isConnected = false;
 
 const connectDB = async () => {
   if (isConnected) return;
   await mongoose.connect(process.env.MONGODB_URI);
   isConnected = true;
 };
-await connectDB();
+app.use(express.json());
 app.get('/users', async(req, res) => {
-    try{
-      const user = await Usuario.find({});
-      res.json(user);
+  try{
+    await connectDB();
+      const users = await Usuario.find({});
+      res.json(users);
     }catch(err){
       res.status(500).json({message: err.message});
     }
