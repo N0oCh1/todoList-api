@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-const Usuario = require('./model/Usuario');
+const Usuario = require('../model/Usuario');
 require('dotenv').config();
 
 mongoose.connect(process.env.MONGO_URL).then(() => {console.log('MongoDB connected')}).catch(err => {console.log(err)});
