@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const tareaSchema = new mongoose.Schema({
   homework: {
     type: String,
-    required: true
+    default: '' 
   },
   complete: {
     type: Boolean,
