@@ -23,7 +23,8 @@ app.get('/users/:ip', async(req, res) => {
 app.post('/users/:ip', async(req, res) => {
 
   try {
-    if(Usuario.findOne({ ip: req.params.ip })){
+    const user = await Usuario.findOne({ ip: req.params.ip });
+    if(user){
       return res.status(400).send('User already exists');
     }
     const newUser = new Usuario(req.body);
