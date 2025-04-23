@@ -11,11 +11,11 @@ const tareaSchema = new mongoose.Schema({
   }
 });
 
-const usuarioSchema = new mongoose.Schema({
-  ip: {
+const TasksSchema = new mongoose.Schema({
+  sesionID: {
     type: String,
-    required: true
+    required: false,
   },
   tasks: [tareaSchema]
 });
-module.exports = mongoose.model('Usuario', usuarioSchema, "session");
+module.exports = mongoose.model("userTasks", TasksSchema);
