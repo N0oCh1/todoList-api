@@ -10,7 +10,7 @@ app.use(cors());
 mongoose.connect(process.env.MONGO_URL);
 app.use(express.json());
 
-// obtener todos lo usuarios registrado
+// todas las tareas de diferentes usuarios 
 app.get("/tasks", async (req, res) => {
   try {
     const users = await userTasks.find();
@@ -19,25 +19,23 @@ app.get("/tasks", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 })
-//obtener un usuario concreto
-app.get('/user/:code', async (req, res) =>{
+app.get("/users", async (req, res) => {
   try{
-    const users = await userSession.find()
-    const user = users.filter(item=>item.id === req.params.code)
-    if(!user){
-     return  res.status(404).json({message:"user not found"})
-    }
-    res.status(201).json(user[0])
-  } catch(err){
-    res.status(500).json({message: err.message})
-  }
+    const user = await userSession.find();
+    if (!user) return res.status(404).send('User not found');
+    res.status(200).json(user);
+  }catch(err){
+    res.status(500).json({message: err.message});
+  } 
 })
+
+
 // agregar nueva tarea para la session del usuario
 app.post('/tasks/:code/new-task', async (req, res)=>{
   try{
     const  taskId  = req.params.code
     const body = req.body
-    const newTask = await userTasks.findOneAndUpdate(
+    const newTask = new userTasks.findOneAndUpdate(
       {sesionID: taskId},
       {$push: {tasks: body}},
       {new: true}
@@ -50,6 +48,7 @@ app.post('/tasks/:code/new-task', async (req, res)=>{
     res.status(500).json({message: err.message})
   }
 })
+
 // eliminar una tarea especifica
 app.delete('/tasks/:code/:taskID', async(req, res) => {
   try{
@@ -70,42 +69,72 @@ app.delete('/tasks/:code/:taskID', async(req, res) => {
     res.status(500).json({message: err.message})
   }
 })
+
 // actualisar tarea especifica
 app.put('/tasks/:code/:taskID', async(req, res) => {
   try{
     const sessionID = req.params.code
     const taskID = req.params.taskID
     const body = req.body
-    const deleteTask = await userTasks.findOneAndUpdate(
-      {sesionID: sessionID},
-      {$pull:{tasks:{_id:taskID}}},
-      {new:true}
-    )
-    if(!deleteTask){
-      return res.status(404).json(
-        {message: "task not found"}
-      )
+    const updatedTask = await userTasks.findOneAndUpdate(
+      { sesionID: sessionID, "tasks._id": taskID }, 
+      { $set: { "tasks.$": body } }, 
+      { new: true }
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Task not found" });
     }
-    res.status(201).json(deleteTask)
-  }catch(err){
-    res.status(500).json({message: err.message})
+
+    res.status(200).json(updatedTask);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 })
 
+
+/**
+ * obtener usuario por su codigo, si el usuario no exite debera llamar a login,
+ * si exite llamar a las task del usuario
+ */
+app.get('/users/:code', async (req, res) =>{
+  try{
+    const user = await userSession.findOne({code:req.params.code})
+    if(!user){
+     return  res.status(201).json({message:"create"})
+    }
+    res.status(200).json(user) // Changed from 201 to 200 and removed [0] since user is a single object
+  } catch(err){
+    res.status(500).json({message: err.message})
+  }
+});
+
+// obtener tareas por el codigo del usuario
+app.get("/tasks/:code", async (req, res) =>{
+  try{
+    const userCode = req.params.code
+    const task = await userTasks.findOne({sesionID : userCode})
+    if(!task){
+      return res.status(404).json({message:"task not found"})
+    }
+    res.status(200).json(task)
+  }catch(err){
+    res.status(500).json({message:err.message})
+  }
+})
 // login 
 app.post('/login', async (req, res) =>{
-
   try {
     const newUser = new userSession({
       user: req.body.user,
-      id: req.body.id 
+      code: req.body.code 
     });
     const savedUser = await newUser.save();
     const newTask = new userTasks({
-      sesionID: newUser.id,
+      sesionID: newUser.code,
       tasks: []
-    })
-    await newTask.save()
+    });
+    await newTask.save();
     res.status(201).json(savedUser);
   }
   catch(err){
@@ -113,15 +142,6 @@ app.post('/login', async (req, res) =>{
   }
 })
 
-app.get("/users", async (req, res) => {
-  try{
-    const user = await userSession.find();
-    if (!user) return res.status(404).send('User not found');
-    res.status(200).json(user);
-  }catch(err){
-    res.status(500).json({message: err.message});
-  } 
-})
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
